@@ -1,0 +1,190 @@
+-- Table: Customers
+CREATE TABLE Customers (
+    CustomerID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(255) NOT NULL,
+    Address NVARCHAR(255),
+    Phone NVARCHAR(15),
+    Email NVARCHAR(255) UNIQUE,
+    DateOfBirth DATE,
+    SocialSecurityNumber CHAR(11) UNIQUE
+);
+
+-- Table: Accounts
+CREATE TABLE Accounts (
+    AccountID INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerID INT,
+    AccountType NVARCHAR(50),
+    Balance DECIMAL(18, 2) DEFAULT 0.00,
+    CreatedDate DATETIME DEFAULT GETDATE(),
+    Status NVARCHAR(50),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+-- Table: Transactions
+CREATE TABLE Transactions (
+    TransactionID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT,
+    TransactionType NVARCHAR(50),
+    Amount DECIMAL(18, 2),
+    TransactionDate DATETIME DEFAULT GETDATE(),
+    Description NVARCHAR(255),
+    BalanceAfterTransaction DECIMAL(18, 2),
+    FOREIGN KEY (AccountID) REFERENCES Accounts(AccountID)
+);
+
+-- Table: Loans
+CREATE TABLE Loans (
+    LoanID INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerID INT,
+    LoanType NVARCHAR(50),
+    PrincipalAmount DECIMAL(18, 2),
+    InterestRate DECIMAL(5, 2),
+    LoanTerm INT,  -- in months
+    StartDate DATE,
+    EndDate DATE,
+    Status NVARCHAR(50),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+-- Table: Payments
+CREATE TABLE Payments (
+    PaymentID INT IDENTITY(1,1) PRIMARY KEY,
+    LoanID INT,
+    Amount DECIMAL(18, 2),
+    PaymentDate DATETIME DEFAULT GETDATE(),
+    PaymentMethod NVARCHAR(50),
+    FOREIGN KEY (LoanID) REFERENCES Loans(LoanID)
+);
+
+-- Table: Branches
+CREATE TABLE Branches (
+    BranchID INT IDENTITY(1,1) PRIMARY KEY,
+    BranchName NVARCHAR(255) NOT NULL,
+    Address NVARCHAR(255),
+    Phone NVARCHAR(15),
+    ManagerName NVARCHAR(255)
+);
+
+-- Table: Employees
+CREATE TABLE Employees (
+    EmployeeID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(255) NOT NULL,
+    Position NVARCHAR(255),
+    BranchID INT,
+    HireDate DATE,
+    Salary DECIMAL(18, 2),
+    Email NVARCHAR(255) UNIQUE,
+    Phone NVARCHAR(15),
+    FOREIGN KEY (BranchID) REFERENCES Branches(BranchID)
+);
+
+-- Table: AccountTypes
+CREATE TABLE AccountTypes (
+    AccountTypeID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountTypeName NVARCHAR(50) NOT NULL,
+    Description NVARCHAR(255),
+    InterestRate DECIMAL(5, 2)
+);
+
+-- Table: InterestRates
+CREATE TABLE InterestRates (
+    InterestRateID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountTypeID INT,
+    Rate DECIMAL(5, 2),
+    EffectiveDate DATE,
+    ExpiryDate DATE,
+    FOREIGN KEY (AccountTypeID) REFERENCES AccountTypes(AccountTypeID)
+);
+
+-- Table: Fees
+CREATE TABLE Fees (
+    FeeID INT IDENTITY(1,1) PRIMARY KEY,
+    FeeType NVARCHAR(50) NOT NULL,
+    Amount DECIMAL(18, 2),
+    Description NVARCHAR(255),
+    EffectiveDate DATE
+);
+
+-- Table: AuditLog
+CREATE TABLE AuditLog (
+    LogID INT IDENTITY(1,1) PRIMARY KEY,
+    ActionType NVARCHAR(50),
+    TableName NVARCHAR(50),
+    RecordID INT,
+    ChangeDetails NVARCHAR(MAX),
+    ActionDate DATETIME DEFAULT GETDATE(),
+    PerformedBy INT,
+    FOREIGN KEY (PerformedBy) REFERENCES Employees(EmployeeID)
+);
+
+-- Table: Security
+CREATE TABLE Security (
+    UserID INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(255) UNIQUE,
+    PasswordHash NVARCHAR(255),
+    RoleID INT,
+    LastLoginDate DATETIME,
+    FailedLoginAttempts INT DEFAULT 0,
+    AccountLocked BIT DEFAULT 0,
+    FOREIGN KEY (RoleID) REFERENCES [Roles](RoleID)
+);
+
+-- Table: Roles
+CREATE TABLE [Roles] (
+    RoleID INT IDENTITY(1,1) PRIMARY KEY,
+    RoleName NVARCHAR(50) NOT NULL,
+    Description NVARCHAR(255),
+    Permissions NVARCHAR(MAX)
+);
+
+-- Table: Notifications
+CREATE TABLE Notifications (
+    NotificationID INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerID INT,
+    Message NVARCHAR(MAX),
+    NotificationType NVARCHAR(50),
+    SentDate DATETIME DEFAULT GETDATE(),
+    Status NVARCHAR(50),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+-- Table: Settings
+CREATE TABLE Settings (
+    SettingID INT IDENTITY(1,1) PRIMARY KEY,
+    SettingName NVARCHAR(50) NOT NULL,
+    SettingValue NVARCHAR(255),
+    Description NVARCHAR(255)
+);
+
+-- Table: SignIns
+CREATE TABLE SignIns (
+    SignInID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT,
+    SignInDate DATETIME DEFAULT GETDATE(),
+    IPAddress NVARCHAR(45),
+    DeviceDetails NVARCHAR(255),
+    Status NVARCHAR(50),
+    FOREIGN KEY (UserID) REFERENCES Security(UserID)
+);
+
+-- Table: Requests
+CREATE TABLE Requests (
+    RequestID INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerID INT,
+    RequestType NVARCHAR(50), -- e.g., "Letter Request", "Stop Cheque Request", "Certified Cheque Request"
+    RequestDate DATETIME DEFAULT GETDATE(),
+    Status NVARCHAR(50), -- e.g., "Pending", "Completed"
+    Details NVARCHAR(MAX),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+-- Table: Events
+CREATE TABLE Events (
+    EventID INT IDENTITY(1,1) PRIMARY KEY,
+    EventType NVARCHAR(50), -- e.g., "Fee Collection", "Statement Generation"
+    EventDate DATETIME DEFAULT GETDATE(),
+    AccountID INT,
+    Details NVARCHAR(MAX),
+    Status NVARCHAR(50), -- e.g., "Completed", "Pending"
+    FOREIGN KEY (AccountID) REFERENCES Accounts(AccountID)
+);
